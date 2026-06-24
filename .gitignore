@@ -222,3 +222,7 @@ __marimo__/
 *.tfstate
 *.tfstate.backup
 .terraform.lock.hcl
+
+# Data files
+data/
+*.csv
