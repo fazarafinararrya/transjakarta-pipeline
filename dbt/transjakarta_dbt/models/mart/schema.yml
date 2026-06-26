@@ -1,0 +1,41 @@
+version: 2
+
+models:
+  - name: fact_transactions
+    description: "Tabel transaksi Transjakarta yang sudah dibersihkan"
+    columns:
+      - name: transID
+        description: "ID unik transaksi"
+        tests:
+          - unique
+          - not_null
+
+      - name: corridorID
+        description: "Kode rute"
+        tests:
+          - not_null
+
+      - name: payAmount
+        description: "Tarif yang dibayar"
+        tests:
+          - not_null
+
+      - name: is_complete_trip
+        description: "Flag apakah penumpang tap out"
+        tests:
+          - not_null
+
+  - name: dim_corridor
+    description: "Master rute + jenis layanan"
+    columns:
+      - name: corridorID
+        tests:
+          - not_null
+
+  - name: dim_stops
+    description: "Master halte + koordinat"
+    columns:
+      - name: stop_id
+        tests:
+          - unique
+          - not_null

@@ -226,3 +226,6 @@ __marimo__/
 # Data files
 data/
 *.csv
+
+# Great Expectations
+gx/uncommitted/
