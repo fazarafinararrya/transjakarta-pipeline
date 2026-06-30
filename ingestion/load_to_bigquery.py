@@ -1,17 +1,20 @@
 from google.cloud import bigquery
+import sys
 
-# Konfigurasi
 PROJECT_ID = "transjakarta-pipeline"
 DATASET = "transjakarta"
 TABLE = "staging_transjakarta_raw"
 BUCKET_NAME = "transjakarta-raw-data"
 
-GCS_URI = f"gs://{BUCKET_NAME}/raw/transjakarta/2023/04/*/data.csv"
+# Terima tanggal dari argument
+target_date = sys.argv[1] if len(sys.argv) > 1 else "2023-04-01"
+year, month, day = target_date.split("-")
+
+GCS_URI = f"gs://{BUCKET_NAME}/raw/transjakarta/{year}/{month}/{day}/data.csv"
 
 client = bigquery.Client(project=PROJECT_ID)
 table_id = f"{PROJECT_ID}.{DATASET}.{TABLE}"
 
-# Definisikan SEMUA kolom sebagai STRING (raw layer = apa adanya)
 schema = [
     bigquery.SchemaField("transID", "STRING"),
     bigquery.SchemaField("payCardID", "STRING"),
@@ -40,18 +43,14 @@ schema = [
 job_config = bigquery.LoadJobConfig(
     source_format=bigquery.SourceFormat.CSV,
     skip_leading_rows=1,
-    schema=schema,                       # pakai schema STRING, bukan autodetect
-    write_disposition="WRITE_TRUNCATE",
+    schema=schema,
+    write_disposition="WRITE_APPEND",
     allow_quoted_newlines=True,
 )
 
-print("Loading data dari GCS ke BigQuery...")
-print(f"Source: {GCS_URI}")
-print(f"Target: {table_id}\n")
-
+print(f"Loading data tanggal {target_date} dari GCS ke BigQuery...")
 load_job = client.load_table_from_uri(GCS_URI, table_id, job_config=job_config)
 load_job.result()
 
 table = client.get_table(table_id)
-print(f"Selesai! {table.num_rows} rows ter-load ke {table_id}")
-print(f"Jumlah kolom: {len(table.schema)}")
+print(f"Selesai! Total {table.num_rows} rows di {table_id}")

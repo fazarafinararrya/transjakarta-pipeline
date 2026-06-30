@@ -1,0 +1,7 @@
+click==8.2.1
+google-cloud-storage
+google-cloud-bigquery
+dbt-bigquery
+great-expectations
+pandas
+db-dtypes

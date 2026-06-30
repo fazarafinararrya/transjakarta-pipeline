@@ -1,33 +1,29 @@
 from google.cloud import storage
 import os
+import sys
 
 # Konfigurasi
 BUCKET_NAME = "transjakarta-raw-data"
-LOCAL_DIR = "data/daily"
+LOCAL_DIR = "/opt/airflow/data/daily"
 GCS_PREFIX = "raw/transjakarta"
 
-# Inisialisasi client GCS
+# Terima tanggal dari argument (format: 2023-04-01)
+# Kalau dijalankan manual tanpa argument, default ke tanggal 1 (buat testing)
+target_date = sys.argv[1] if len(sys.argv) > 1 else "2023-04-01"
+
 client = storage.Client()
 bucket = client.bucket(BUCKET_NAME)
 
-print(f"Mulai upload ke bucket: {BUCKET_NAME}\n")
+filename = f"transjakarta_{target_date}.csv"
+local_path = os.path.join(LOCAL_DIR, filename)
 
-# Loop semua file di folder daily
-files = sorted(os.listdir(LOCAL_DIR))
-for filename in files:
-    if filename.endswith(".csv"):
-        local_path = os.path.join(LOCAL_DIR, filename)
-        
-        # Ambil tanggal dari nama file: transjakarta_2023-04-01.csv
-        date_part = filename.replace("transjakarta_", "").replace(".csv", "")
-        year, month, day = date_part.split("-")
-        
-        # Struktur folder di GCS: raw/transjakarta/2023/04/01/data.csv
-        gcs_path = f"{GCS_PREFIX}/{year}/{month}/{day}/data.csv"
-        
-        # Upload
-        blob = bucket.blob(gcs_path)
-        blob.upload_from_filename(local_path)
-        print(f"  {filename} -> gs://{BUCKET_NAME}/{gcs_path}")
+if not os.path.exists(local_path):
+    print(f"File tidak ditemukan: {local_path}")
+    sys.exit(1)
 
-print(f"\nSelesai! {len(files)} file ter-upload ke GCS.")
+year, month, day = target_date.split("-")
+gcs_path = f"{GCS_PREFIX}/{year}/{month}/{day}/data.csv"
+
+blob = bucket.blob(gcs_path)
+blob.upload_from_filename(local_path)
+print(f"Upload selesai: {filename} -> gs://{BUCKET_NAME}/{gcs_path}")
